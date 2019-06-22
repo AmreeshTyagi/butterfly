@@ -44,9 +44,9 @@ func ProvideRedisConfig() cache.Config {
 	}
 }
 
-// ProvideCoreDatabase is provide instance
-func ProvideCoreDatabase() database.Database {
-	return database.NewCoreDatabase(ProvideConfig())
+// ProvidePostgresDatabase is provide instance
+func ProvidePostgresDatabase() database.Database {
+	return database.NewPostgresDatabase(ProvideConfig())
 }
 
 // ProvideCasbinDatabase is provide instance
@@ -67,4 +67,9 @@ func ProvideRedisCache() cache.RedisCache {
 // ProvideRedisClient is provide instance
 func ProvideRedisClient() *redis.Client {
 	return ProvideRedisCache().Client()
+}
+
+// ProvideRedisDataSource is provide instance
+func ProvideRedisDataSource() cache.RedisDataSource {
+	return cache.NewRedisDataSource(ProvideRedisClient())
 }

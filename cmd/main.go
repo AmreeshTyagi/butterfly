@@ -13,13 +13,18 @@ import (
 
 func main() {
 
+	rc := di.ProvideRedisClient()
+	tokenID, _ := rc.Get("token_id").Result()
+	log.Println(tokenID)
+
 	ce := di.ProvideEnforcer()
 	// e.AddPolicy("admin", "/*", "*")
-	// e.AddPolicy("anonymous", "/login", "GET")
+	ce.AddPolicy("anonymous", "/login", "GET")
 	// e.AddPolicy("anonymous", "/login", "POST")
 	// e.AddPolicy("member", "/logout", "GET")
 	// e.AddPolicy("member", "/member", "*")
 	ce.LoadPolicy()
+	ce.GetPolicy()
 
 	role := "anonymous"
 	path := "/login"

@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/casbin/casbin"
 	sqlxadapter "github.com/memwey/casbin-sqlx-adapter"
@@ -34,7 +33,6 @@ func (c *casbindatabase) NewEnforcer() *casbin.Enforcer {
 		c.Config.DatabaseName,
 		c.Config.SSLMode,
 	)
-	log.Println(dataSource)
 	a := sqlxadapter.NewAdapter(c.Config.DriverName, dataSource)
 	ce := casbin.NewEnforcer(c.Config.PolicyFile, a)
 	ce.EnableAutoSave(true)

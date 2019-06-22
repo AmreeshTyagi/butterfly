@@ -34,18 +34,18 @@ type Database interface {
 	Connect() *sqlx.DB
 }
 
-type coreDatabase struct {
+type postgresDatabase struct {
 	Config Config
 }
 
-// NewCoreDatabase is a instance
-func NewCoreDatabase(config Config) Database {
-	return &coreDatabase{
+// NewPostgresDatabase is a instance
+func NewPostgresDatabase(config Config) Database {
+	return &postgresDatabase{
 		Config: config,
 	}
 }
 
-func (c *coreDatabase) Connect() *sqlx.DB {
+func (c *postgresDatabase) Connect() *sqlx.DB {
 	dataSource := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Config.Host,
