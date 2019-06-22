@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:11.2-alpine
+    environment:
+      # POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1e8c8d0a-011b-43f2-a3a6-7fdfb8ad619a
+      POSTGRES_DB: butterflydb
+    volumes:
+       - ./volumns/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  
+  redis:
+    image: redis:5.0.5-alpine
+    restart: always
+    command: redis-server --requirepass e7a22218-34ac-41f5-952c-b35fed9213d4
+    expose:
+      - 6379
+
+networks:
+  postgres:
+    driver: bridge
