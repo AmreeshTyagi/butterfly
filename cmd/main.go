@@ -4,14 +4,33 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
-	"github.com/prongbang/butterfly/pkg/casbinrest"
 	"github.com/prongbang/butterfly/pkg/di"
+	"github.com/prongbang/casbinrest"
 )
 
+type mockDataSource struct {
+}
+
+// NewMockDataSource is the instance
+func NewMockDataSource() casbinrest.DataSource {
+	return &mockDataSource{}
+}
+
+const mockAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+func (r *mockDataSource) GetRoleByToken(reqToken string) string {
+	role := "anonymous"
+	if reqToken == mockAdminToken {
+		role = "admin"
+	}
+	return role
+}
+
 func main() {
+	mockSource := NewMockDataSource()
 
 	rc := di.ProvideRedisClient()
 	tokenID, _ := rc.Get("token_id").Result()
@@ -32,8 +51,8 @@ func main() {
 	result := ce.Enforce(role, path, method)
 	log.Println(result)
 
-	myRes := ce.GetPolicy()
-	log.Print("Policy: ", myRes)
+	// myRes := ce.GetPolicy()
+	// log.Print("Policy: ", myRes)
 
 	e := echo.New()
 	e.Debug = true
@@ -41,7 +60,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(casbinrest.Middleware(ce))
+	e.Use(casbinrest.Middleware(ce, mockSource))
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
