@@ -1,7 +1,6 @@
 package casbinrest
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/casbin/casbin"
@@ -18,6 +17,10 @@ type (
 		// Enforcer CasbinAuth main rule.
 		// Required.
 		Enforcer *casbin.Enforcer
+
+		// Source Auth in database.
+		// Required.
+		Source DataSource
 	}
 )
 
@@ -28,55 +31,51 @@ var (
 	}
 )
 
+// DataSource is the Authen from datasource
+type DataSource interface {
+	GetRoleByToken(reqToken string) string
+}
+
 // Middleware returns a CasbinAuth middleware.
 //
 // For valid credentials it calls the next handler.
 // For missing or invalid credentials, it sends "401 - Unauthorized" response.
-func Middleware(ce *casbin.Enforcer) echo.MiddlewareFunc {
+func Middleware(ce *casbin.Enforcer, sc DataSource) echo.MiddlewareFunc {
 	c := DefaultConfig
 	c.Enforcer = ce
+	c.Source = sc
 	return MiddlewareWithConfig(c)
 }
 
 // MiddlewareWithConfig returns a CasbinAuth middleware with config.
 // See `Middleware()`.
 func MiddlewareWithConfig(config Config) echo.MiddlewareFunc {
-	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultConfig.Skipper
 	}
-
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if config.Skipper(c) || config.CheckPermission(c) {
 				return next(c)
 			}
-
 			return echo.ErrForbidden
 		}
 	}
 }
 
-// GetRole gets the user name from the request.
-// Currently, only HTTP basic authentication is supported
+// GetRole gets the role name from the request.
 func (a *Config) GetRole(c echo.Context) string {
 	reqToken := c.Request().Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer")
 	if len(splitToken) != 2 {
-		// Error: Bearer token not in proper format
 		return ""
 	}
 	reqToken = strings.TrimSpace(splitToken[1])
-	fmt.Println(reqToken)
-
-	return reqToken
+	return a.Source.GetRoleByToken(reqToken)
 }
 
-// CheckPermission checks the user/method/path combination from the request.
+// CheckPermission checks the role/method/path combination from the request.
 // Returns true (permission granted) or false (permission forbidden)
 func (a *Config) CheckPermission(c echo.Context) bool {
-	user := a.GetRole(c)
-	method := c.Request().Method
-	path := c.Request().URL.Path
-	return a.Enforcer.Enforce(user, path, method)
+	return a.Enforcer.Enforce(a.GetRole(c), c.Request().URL.Path, c.Request().Method)
 }
